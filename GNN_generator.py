@@ -1,15 +1,19 @@
-import numpy as np
+import os
+import shutil
+
 import ROOT
+import numpy as np
 import torch
 import torch_geometric
-from torch.utils.data import DataLoader
 from torch_geometric.datasets import FakeDataset
+from torch_geometric.loader import DataLoader
 
 
 def main():
     # Load data.
+    np.random.seed(0)
     n_graphs = 300
-    dataset = FakeDataset(num_graphs=n_graphs)
+    dataset = FakeDataset(num_graphs=n_graphs, avg_num_nodes=500, avg_degree=5, num_channels=32, num_classes=5)
     dataset = [graph for graph in dataset]
     global_attributes = torch.tensor(np.zeros(n_graphs), dtype=torch.float)
     for i in range(len(dataset)):
@@ -20,33 +24,50 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=8, shuffle=False)
 
     # Save test samples.
-    np.savetxt('data/X.csv', X_test, delimiter=',')
-    np.savetxt('data/y.csv', y_test, delimiter=',')
+    shutil.rmtree('data')
+    count = 0
+    for data in test_loader:
+        os.makedirs(f'data/batch_{count}')
+        np.savetxt(f'data/batch_{count}/X.csv', data.x.numpy(), delimiter=',')
+        np.savetxt(f'data/batch_{count}/edge_index.csv', data.edge_index.numpy(), delimiter=',')
+        np.savetxt(f'data/batch_{count}/batch.csv', data.batch.numpy(), delimiter=',')
+        count += 1
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = GCN().to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-3)
+    torch_model = Model().to(device)
+    optimizer = torch.optim.Adam(torch_model.parameters(), lr=0.001, weight_decay=1e-3)
     criterion = torch.nn.CrossEntropyLoss()
 
     def train():
-        model.train()
+        torch_model.train()
 
         for data in train_loader:  # Iterate in batches over the training dataset.
             data = data.to(device)
-            out = model(data.x, data.edge_index, data.edge_attr, data.global_attr, data.batch)  # A single forward pass.
+            out = torch_model(data.x, data.edge_index, data.batch)  # A single forward pass.
             loss = criterion(out, data.y)  # Compute the loss.
             loss.backward()  # Derive gradients.
             optimizer.step()  # Update parameters based on gradients.
             optimizer.zero_grad()  # Clear gradients.
 
     @torch.no_grad()
-    def test(loader):
-        model.eval()
+    def test(loader, write=False):
+        torch_model.eval()
+
+        if write:
+            with open('result.csv', 'w') as f:
+                f.write('')
 
         correct = 0
-        for data in loader:  # Iterate in batches over the training/test dataset.
+        for data in loader:  # Iterate in batches over the test dataset.
             data = data.to(device)
-            out = model(data.x, data.edge_index, data.edge_attr, data.global_attr, data.batch)
+            out = torch_model(data.x, data.edge_index, data.batch)
+
+            if write:
+                with open('result.csv', 'a') as f:
+                    for i in out.cpu().numpy():
+                        for j in i:
+                            f.write(str(j) + ",")
+                        f.write('\n')
             pred = out.argmax(dim=1)  # Use the class with the highest probability.
             correct += int((pred == data.y).sum())  # Check against ground-truth labels.
         return correct / len(loader.dataset)  # Derive ratio of correct predictions.
@@ -67,15 +88,15 @@ def main():
     torch.jit.save(model_script, 'model_script.pt')
 
     # Generate ROOT model.
-    model = ROOT.TMVA.Experimental.SOFIE.RModel_TorchGNN(['X'], [[-1, 3072]])
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('X', 3072, 200), 'linear_1')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_ReLU('linear_1'), 'relu_1')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('relu_1', 200, 200), 'linear_2')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_ReLU('linear_2'), 'relu_2')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('relu_2', 200, 10), 'linear_3')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Softmax('linear_3'), 'softmax')
+    model = ROOT.TMVA.Experimental.SOFIE.RModel_TorchGNN(['X', 'edge_index', 'batch'], [[-1, 32], [2, -1], [-1]])
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('X', 'edge_index', 32, 16), 'conv_1')
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_ReLU('conv_1'), 'relu')
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('relu', 'edge_index', 16, 16), 'conv_2')
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GlobalMeanPool('conv_2', 'batch'), 'pool')
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('pool', 16, 5), 'linear')
+    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Softmax('linear'), 'softmax')
     model.extractParameters(torch_model)
-    model.save("/home/stefan/TorchGNN", "Model", True)
+    model.save(os.getcwd(), 'Model', True)
 
 
 class Model(torch.nn.Module):
@@ -84,16 +105,16 @@ class Model(torch.nn.Module):
 
         self.activation = torch.nn.ReLU()
 
-        self.conv1 = torch_geometric.nn.GCNConv(64, 16)
-        self.conv2 = torch_geometric.nn.GCNConv(16, 16)
-        self.linear = torch.nn.Linear(16, 10)
+        self.conv_1 = torch_geometric.nn.GCNConv(32, 16).jittable()
+        self.conv_2 = torch_geometric.nn.GCNConv(16, 16).jittable()
+        self.linear = torch.nn.Linear(16, 5)
         self.softmax = torch.nn.Softmax(dim=-1)
 
-    def forward(self, x, edge_index, batch_index):
-        x = self.conv1(x, edge_index)
+    def forward(self, x, edge_index, batch):
+        x = self.conv_1(x, edge_index)
         x = self.activation(x)
-        x = self.conv2(x, edge_index)
-        x = torch_geometric.nn.global_mean_pool(x, batch_index)
+        x = self.conv_2(x, edge_index)
+        x = torch_geometric.nn.global_mean_pool(x, batch)
         x = self.linear(x)
         x = self.softmax(x)
         return x
