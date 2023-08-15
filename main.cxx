@@ -138,7 +138,7 @@ int main() {
       std::vector<float> edge_index = edge_indices[i];
       std::vector<float> batch = batches[i];
 
-      std::vector<float> out_batch = torchGNN_model.forward(X, edge_index, batch);
+      std::vector<float> out_batch = torchGNN_model.Forward(X, edge_index, batch);
 
       for (float e: out_batch) {
         out.push_back(e);
@@ -188,7 +188,7 @@ int main() {
         std::vector<float> batch = batches[i];
 
         start = std::chrono::high_resolution_clock::now();
-        std::vector<float> out_batch = torchGNN_model.forward(X, edge_index, batch);
+        std::vector<float> out_batch = torchGNN_model.Forward(X, edge_index, batch);
         end = std::chrono::high_resolution_clock::now();
         torchGNN_time += end - start;
       }

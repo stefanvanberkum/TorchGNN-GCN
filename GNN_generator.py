@@ -89,14 +89,14 @@ def main():
 
     # Generate ROOT model.
     model = ROOT.TMVA.Experimental.SOFIE.RModel_TorchGNN(['X', 'edge_index', 'batch'], [[-1, 32], [2, -1], [-1]])
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('X', 'edge_index', 32, 16), 'conv_1')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_ReLU('conv_1'), 'relu')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('relu', 'edge_index', 16, 16), 'conv_2')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_GlobalMeanPool('conv_2', 'batch'), 'pool')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('pool', 16, 5), 'linear')
-    model.addModule(ROOT.TMVA.Experimental.SOFIE.RModule_Softmax('linear'), 'softmax')
-    model.extractParameters(torch_model)
-    model.save(os.getcwd(), 'Model', True)
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('X', 'edge_index', 32, 16), 'conv_1')
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_ReLU('conv_1'), 'relu')
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_GCNConv('relu', 'edge_index', 16, 16), 'conv_2')
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_GlobalMeanPool('conv_2', 'batch'), 'pool')
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_Linear('pool', 16, 5), 'linear')
+    model.AddModule(ROOT.TMVA.Experimental.SOFIE.RModule_Softmax('linear'), 'softmax')
+    model.ExtractParameters(torch_model)
+    model.Save(os.getcwd(), 'Model', True)
 
 
 class Model(torch.nn.Module):
