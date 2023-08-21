@@ -11,8 +11,6 @@
 #include <thread>
 
 int main() {
-    openblas_set_num_threads(1);
-
     // Read data.
     std::filesystem::path current_path = std::filesystem::path(__FILE__).parent_path();
     std::vector<std::vector<float>> Xs;
@@ -162,7 +160,7 @@ int main() {
     out_f.close();
 
     // Collect timing data.
-    for (int round = 0; round < 100; round++) {
+    for (int round = 0; round < 1000; round++) {
       for (std::size_t i = 0; i < n_batches; i++) {
         std::vector<float> X = Xs[i];
         std::vector<int64_t> edge_index = std::vector<int64_t>(edge_indices[i].begin(), edge_indices[i].end());

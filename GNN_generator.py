@@ -105,8 +105,8 @@ class Model(torch.nn.Module):
 
         self.activation = torch.nn.ReLU()
 
-        self.conv_1 = torch_geometric.nn.GCNConv(32, 16).jittable()
-        self.conv_2 = torch_geometric.nn.GCNConv(16, 16).jittable()
+        self.conv_1 = torch_geometric.nn.GCNConv(32, 16)
+        self.conv_2 = torch_geometric.nn.GCNConv(16, 16)
         self.linear = torch.nn.Linear(16, 5)
         self.softmax = torch.nn.Softmax(dim=-1)
 
