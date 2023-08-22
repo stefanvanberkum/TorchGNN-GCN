@@ -18,7 +18,9 @@ make install
 ```
 
 ## How to run
-The code can be compiled and run in the following way:
+The model can be trained and parsed by running the Python code ```GNN_generator.py```.
+
+The C++ benchmarking code ```main.cxx``` can be compiled and run in the following way:
 ```
 cd code_directory
 mkdir build
