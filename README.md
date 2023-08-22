@@ -6,6 +6,7 @@ Integrated example of GCN functionality in ROOT's TorchGNN.
 - PyTorch Scatter: See installation instructions at the [PyTorch Scatter repository](https://github.com/rusty1s/pytorch_scatter#c-api).
 - PyTorch Sparse: See installation instructions at the [PyTorch Sparse repository](https://github.com/rusty1s/pytorch_sparse#c-api).
   - Make sure that the third-party library parallel-hashmap is included in the ```third_party``` directory.
+- BLAS: We used [OpenBLAS](https://www.openblas.net/).
 
 Both PyTorch Scatter and Sparse can be installed in the following way:
 ```
