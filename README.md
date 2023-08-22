@@ -35,3 +35,5 @@ export OMP_NUM_THREADS=1
 ## How to run with sparse matrix operations
 - Download [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page).
 - Change ```RModule_GCNConv``` to ```RModule_SparseGCNConv```.
+
+NOTE. Sparse operations are currently under development, so they are still very slow compared to dense operations using BLAS.
