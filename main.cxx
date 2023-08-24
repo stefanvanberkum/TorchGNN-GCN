@@ -195,8 +195,8 @@ int main() {
     // Write timings.
     std::ofstream time_f;
     time_f.open(current_path.string() + "/timings.csv", std::ios::trunc);
-    time_f << "PyTorch," << std::chrono::duration_cast<std::chrono::milliseconds>(torch_time).count() << std::endl;
-    time_f << "TorchGNN," << std::chrono::duration_cast<std::chrono::milliseconds>(torchGNN_time).count() << std::endl;
+    time_f << "PyTorch," << "TorchGNN" << std::endl;
+    time_f << std::chrono::duration_cast<std::chrono::milliseconds>(torch_time).count() << "," << std::chrono::duration_cast<std::chrono::milliseconds>(torchGNN_time).count() << std::endl;
     time_f.close();
 
     return 0;

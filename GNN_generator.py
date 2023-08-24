@@ -10,8 +10,7 @@ from torch_geometric.loader import DataLoader
 
 
 def main():
-    # Load data.
-    np.random.seed(0)
+    # Generate data.
     n_graphs = 300
     dataset = FakeDataset(num_graphs=n_graphs, avg_num_nodes=500, avg_degree=5, num_channels=32, num_classes=5)
     dataset = [graph for graph in dataset]
