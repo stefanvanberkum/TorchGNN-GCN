@@ -16,4 +16,3 @@ do
 	mv ./timings.csv ./timings/${RUN}.csv
 done
 python3 statistics_collector.py
-

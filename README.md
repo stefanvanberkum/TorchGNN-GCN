@@ -1,6 +1,6 @@
 # TorchGNN-GCN
 
-Integrated example of GCN functionality in ROOT's TorchGNN.
+Integrated example of GNN functionality in ROOT's TorchGNN.
 
 ## Dependencies
 
