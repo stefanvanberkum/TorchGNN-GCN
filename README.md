@@ -45,5 +45,4 @@ export OMP_NUM_THREADS=1
 ./TorchGNN
 ```
 
-Alternatively, one can use the provided bash script ```collect_statistics.sh```, to collect all statistics mentioned in
-the report. Make sure to activate the virtual environment before calling the bash script.
+Alternatively, one can use the provided bash script ```collect_statistics.sh```, to collect all statistics mentioned in the report. Make sure to change the CMAKE_PREFIX_PATH variable and activate the virtual environment before calling the bash script.
